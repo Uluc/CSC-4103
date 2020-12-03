@@ -1,69 +1,69 @@
 CREATE TABLE Address (address_ID int NOT NULL ,
-                                      country varchar(255) NOT NULL,
-                                      state varchar(255) NOT NULL,
-                                      city varchar(255) NOT NULL,
-                                      street_address varchar(255) NOT NULL,
-                                      zipcode int NOT NULL,
-                                      PRIMARY KEY (address_ID));
+                        country varchar(255) NOT NULL,
+                        state varchar(255) NOT NULL,
+                        city varchar(255) NOT NULL,
+                        street_address varchar(255) NOT NULL,
+                        zipcode int NOT NULL,
+                        PRIMARY KEY (address_ID));
 
 CREATE TABLE Customer (customer_ID int NOT NULL,
-                                    first_name varchar(255) NOT NULL,
-                                    last_name varchar(255) NOT NULL,
-                                    address_ID int NOT NULL,
-                                    PRIMARY KEY (customer_ID),
-                                    FOREIGN KEY (address_ID) REFERENCES Address(address_ID));
+                        first_name varchar(255) NOT NULL,
+                        last_name varchar(255) NOT NULL,
+                        address_ID int NOT NULL,
+                        PRIMARY KEY (customer_ID),
+                        FOREIGN KEY (address_ID) REFERENCES Address(address_ID));
 
 CREATE TABLE Restaurant (restaurant_ID int NOT NULL,
-                                        name varchar(255) NOT NULL,
-                                        food_genre varchar(255),
-                                        price_range varChar(255),
-                                        rating decimal(5,2),
-                                        address_ID int NOT NULL,
-                                        open_time time(6) NOT NULL,
-                                        close_time time(6) NOT NULL,
-                                        PRIMARY KEY (restaurant_ID),
-                                        FOREIGN KEY (address_ID) REFERENCES Address(address_ID));
+                        name varchar(255) NOT NULL,
+                        food_genre varchar(255),
+                        price_range varChar(255),
+                        rating decimal(5,2),
+                        address_ID int NOT NULL,
+                        open_time time(6) NOT NULL,
+                        close_time time(6) NOT NULL,
+                        PRIMARY KEY (restaurant_ID),
+                        FOREIGN KEY (address_ID) REFERENCES Address(address_ID));
 
 CREATE TABLE Menu (menu_ID int NOT NULL,
-                            restaurant_ID int NOT NULL,
-                            bio varchar(255),
-                            PRIMARY KEY (menu_ID),
-                            FOREIGN KEY (restaurant_ID) REFERENCES Restaurant(restaurant_ID));
+                    restaurant_ID int NOT NULL,
+                    bio varchar(255),
+                    PRIMARY KEY (menu_ID),
+                    FOREIGN KEY (restaurant_ID) REFERENCES Restaurant(restaurant_ID));
 
 CREATE TABLE Section (section_ID int NOT NULL,
-                                title varchar(255) NOT NULL,
-                                menu_ID int NOT NULL,
-                                start_time time(6) NOT NULL,
-                                end_time time(6) NOT NULL,
-                                PRIMARY KEY (section_ID),
-                                FOREIGN KEY (menu_ID) REFERENCES Menu(menu_ID));
+                        title varchar(255) NOT NULL,
+                        menu_ID int NOT NULL,
+                        start_time time(6) NOT NULL,
+                        end_time time(6) NOT NULL,
+                        PRIMARY KEY (section_ID),
+                        FOREIGN KEY (menu_ID) REFERENCES Menu(menu_ID));
 
 CREATE TABLE Dish (dish_ID int NOT NULL,
-                            name varchar(255) NOT NULL,
-                            section_ID int NOT NULL,
-                            cost decimal(5,2) NOT NULL,
-                            ingredients varchar(255) NOT NULL, 
-                            PRIMARY KEY (dish_ID),
-                            FOREIGN KEY (section_ID) REFERENCES Section(section_ID));
+                    name varchar(255) NOT NULL,
+                    section_ID int NOT NULL,
+                    cost decimal(5,2) NOT NULL,
+                    ingredients varchar(255) NOT NULL, 
+                    PRIMARY KEY (dish_ID),
+                    FOREIGN KEY (section_ID) REFERENCES Section(section_ID));
 
 
 CREATE TABLE Cart (cart_ID int NOT NULL,
-                            restaurant_ID int NOT NULL,
-                            customer_ID int NOT NULL,
-                            time_Ordered datetime DEFAULT CURRENT_TIMESTAMP,
-                            cost decimal(7,2) NOT NULL,
-                            tip decimal(7,2),
-                            PRIMARY KEY (cart_ID),
-                            FOREIGN KEY (customer_ID) REFERENCES Customer(customer_ID),
-                            FOREIGN KEY (restaurant_ID) REFERENCES Restaurant(restaurant_ID));
+                    restaurant_ID int NOT NULL,
+                    customer_ID int NOT NULL,
+                    time_Ordered datetime DEFAULT CURRENT_TIMESTAMP,
+                    cost decimal(7,2) NOT NULL,
+                    tip decimal(7,2),
+                    PRIMARY KEY (cart_ID),
+                    FOREIGN KEY (customer_ID) REFERENCES Customer(customer_ID),
+                    FOREIGN KEY (restaurant_ID) REFERENCES Restaurant(restaurant_ID));
 
 CREATE TABLE Purchase (purchase_ID int NOT NULL,
-                                    cart_ID int NOT NULL,
-                                    dish_ID int NOT NULL,
-                                    quantity int NOT NULL,
-                                    PRIMARY KEY (purchase_ID),
-                                    FOREIGN KEY (cart_ID) REFERENCES Cart(cart_ID),
-                                    FOREIGN KEY (dish_ID) REFERENCES Dish(dish_ID));
+                        cart_ID int NOT NULL,
+                        dish_ID int NOT NULL,
+                        quantity int NOT NULL,
+                        PRIMARY KEY (purchase_ID),
+                        FOREIGN KEY (cart_ID) REFERENCES Cart(cart_ID),
+                        FOREIGN KEY (dish_ID) REFERENCES Dish(dish_ID));
 
 INSERT INTO Address (address_ID, country, state, city, street_address, zipcode) VALUES (1, 'America', 'Texas', 'Mukwonago', '4356 Artesian Avenue', 53149);
 INSERT INTO Address (address_ID, country, state, city, street_address, zipcode) VALUES (2, 'America', 'Wisconsin', 'Milwaukee', '4465 Milwaukee Street', 53201);
@@ -248,8 +248,8 @@ INSERT INTO Purchase (purchase_ID, quantity, dish_id, cart_id) VALUES ( 35, 2, 2
 INSERT INTO Purchase (purchase_ID, quantity, dish_id, cart_id) VALUES ( 36, 3, 35, 8);
 
 SELECT state, COUNT(state) FROM Address
-                              GROUP BY state
-                              ORDER BY COUNT(state) DESC  ;
+                            GROUP BY state
+                            ORDER BY COUNT(state) DESC;
                         
 SELECT R.name, ROUND(AVG(D.cost),2) FROM Restaurant as R
           JOIN Menu as M ON R.restaurant_ID = M.restaurant_ID
@@ -311,5 +311,14 @@ UPDATE Restaurant SET food_genre='Carribean' WHERE restaurant_ID = 8;
 
 UPDATE Cart AS C NATURAL JOIN Customer AS CT SET tip = cost*0.2 WHERE (CT.customer_ID = 1);
 
+UPDATE Restaurant r 
+    JOIN Menu as M ON R.restaurant_ID = M.restaurant_ID
+    JOIN Section as S on M.menu_ID = S.menu_ID
+    JOIN Dish as D on S.section_ID = D.section_ID 
+SET R.price_range = CASE
+    WHEN (SELECT ROUND(AVG(D.cost),2) FROM Dish) > 10 THEN '$$$'
+        WHEN (SELECT ROUND(AVG(D.cost),2) FROM Dish) > 15 THEN '$$$$'
+        ELSE r.price_range
+END;
 
 
