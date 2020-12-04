@@ -284,9 +284,9 @@ SELECT COUNT(R.restaurant_ID), R.name FROM Cart AS C
                   GROUP BY R.restaurant_ID
                   ORDER BY COUNT(R.restaurant_ID) DESC LIMIT 2;
 
-SELECT state FROM Address NATURAL JOIN Restaurant
-                          INTERSECT
-                          SELECT state FROM Address NATURAL JOIN Customer;
+SELECT DISTINCT state FROM Address NATURAL JOIN Restaurant
+                         WHERE state IN
+                         (SELECT DISTINCT state FROM Address NATURAL JOIN Customer);
 
 SELECT D.cost , D.name FROM Restaurant AS R
                 JOIN Menu AS M ON R.restaurant_ID = M.restaurant_ID
@@ -300,7 +300,7 @@ SELECT AVG(cost) FROM Cart
 
 UPDATE Cart AS C JOIN Purchase AS P ON C.Cart_ID = P.Cart_ID
               JOIN Dish AS D ON P.Dish_ID = D.Dish_ID
-              SET C.Cost = (SELECT sum(D.cost * P.quantity)
+              SET C.Cost = (SELECT sum(D.cost * P.quantity) * 1.085
                             FROM Purchase P                
                             WHERE C.cart_id = P.cart_id
                             GROUP BY P.cart_ID);
@@ -321,4 +321,34 @@ SET R.price_range = CASE
         ELSE r.price_range
 END;
 
+DELETE FROM Cart
+    WHERE cost = 0;
 
+DELETE FROM Address
+   WHERE address_ID NOT IN(
+       SELECT aID FROM(
+           SELECT Customer.Address_id AS aID FROM Customer NATURAL JOIN
+ 		Address
+       ) AS CA
+   )
+   AND address_ID NOT IN(
+       SELECT aID FROM(
+           SELECT Restaurant.Address_id AS aID FROM Restaurant NATURAL
+ 		JOIN Address
+       ) AS RA
+   )
+
+
+DELETE FROM Customer
+   WHERE customer_id IN(
+       SELECT c_ID FROM(
+           SELECT Cart.customer_id AS c_ID FROM Cart NATURAL JOIN
+ 		Customer as C
+           GROUP BY C.customer_ID
+           ORDER BY COUNT(C.customer_ID)
+       ) AS CC
+   )
+   LIMIT 1;
+
+DELETE FROM restaurant
+   WHERE name = "Justins Junction";
